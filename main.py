@@ -69,35 +69,66 @@ def draw_board():
 
 
 def move(direction):
+    global board
+
     moved = False
 
-    if direction == "left":
+    if direction == "up":
+        for col in range(GRID_SIZE):
+            column = [board[row][col] for row in range(GRID_SIZE)]
+            merged = merge_tiles(column)
+            for row in range(GRID_SIZE):
+                board[row][col] = merged[row]
+
+    elif direction == "down":
+        for col in range(GRID_SIZE):
+            column = [board[row][col] for row in range(GRID_SIZE)]
+            column.reverse()
+            merged = merge_tiles(column)
+            merged.reverse()
+            for row in range(GRID_SIZE):
+                board[row][col] = merged[row]
+
+    elif direction == "left":
         for row in range(GRID_SIZE):
-            new_row = []
-            merged = [False] * GRID_SIZE
+            merged = merge_tiles(board[row])
+            board[row] = merged
 
-            for col in range(GRID_SIZE):
-                if board[row][col] != 0:
-                    if len(new_row) > 0 and not merged[col]:
-                        if new_row[-1] == board[row][col]:
-                            new_row[-1] *= 2
-                            merged[col] = True
-                            moved = True
-                        else:
-                            new_row.append(board[row][col])
-                    else:
-                        new_row.append(board[row][col])
+    elif direction == "right":
+        for row in range(GRID_SIZE):
+            row_tiles = board[row]
+            row_tiles.reverse()
+            merged = merge_tiles(row_tiles)
+            merged.reverse()
+            board[row] = merged
 
-            new_row.extend([0] * (GRID_SIZE - len(new_row)))
-            board[row] = new_row
-
-    # Add similar logic for other directions (up, down, right)
+    if any(2048 in row for row in board):
+        # Handle game win here
+        pass
 
     if moved:
         generate_new_tile(board)
         draw_board()
 
     return moved
+
+
+def merge_tiles(tiles):
+    merged = [0] * GRID_SIZE
+    merged_idx = 0
+
+    for tile in tiles:
+        if tile != 0:
+            if merged[merged_idx] == 0:
+                merged[merged_idx] = tile
+            elif merged[merged_idx] == tile:
+                merged[merged_idx] *= 2
+                merged_idx += 1
+            else:
+                merged_idx += 1
+                merged[merged_idx] = tile
+
+    return merged
 
 
 # 游戏循环
