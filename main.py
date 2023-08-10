@@ -15,6 +15,8 @@ def generate_new_tile(board):
     if empty_cells:
         i, j = random.choice(empty_cells)
         board[i][j] = 2 if random.random() < 0.9 else 4
+        return True  # 更新 moved 的状态
+    return False  # 没有生成新方块，不需要更新 moved 的状态
 
 
 # 初始化Pygame
@@ -68,51 +70,6 @@ def draw_board():
     pygame.display.flip()
 
 
-def move(direction):
-    global board
-
-    moved = False
-
-    if direction == "up":
-        for col in range(GRID_SIZE):
-            column = [board[row][col] for row in range(GRID_SIZE)]
-            merged = merge_tiles(column)
-            for row in range(GRID_SIZE):
-                board[row][col] = merged[row]
-
-    elif direction == "down":
-        for col in range(GRID_SIZE):
-            column = [board[row][col] for row in range(GRID_SIZE)]
-            column.reverse()
-            merged = merge_tiles(column)
-            merged.reverse()
-            for row in range(GRID_SIZE):
-                board[row][col] = merged[row]
-
-    elif direction == "left":
-        for row in range(GRID_SIZE):
-            merged = merge_tiles(board[row])
-            board[row] = merged
-
-    elif direction == "right":
-        for row in range(GRID_SIZE):
-            row_tiles = board[row]
-            row_tiles.reverse()
-            merged = merge_tiles(row_tiles)
-            merged.reverse()
-            board[row] = merged
-
-    if any(2048 in row for row in board):
-        # Handle game win here
-        pass
-
-    if moved:
-        generate_new_tile(board)
-        draw_board()
-
-    return moved
-
-
 def merge_tiles(tiles):
     merged = [0] * GRID_SIZE
     merged_idx = 0
@@ -129,6 +86,55 @@ def merge_tiles(tiles):
                 merged[merged_idx] = tile
 
     return merged
+
+
+def move(direction):
+    global board
+
+    moved = False
+
+    if direction == "up":
+        for col in range(GRID_SIZE):
+            column = [board[row][col] for row in range(GRID_SIZE)]
+            merged = merge_tiles(column)
+            if column != merged:  # 判断是否发生了移动
+                moved = True
+            for row in range(GRID_SIZE):
+                board[row][col] = merged[row]
+
+    elif direction == "down":
+        for col in range(GRID_SIZE):
+            column = [board[row][col] for row in range(GRID_SIZE)]
+            column.reverse()
+            merged = merge_tiles(column)
+            merged.reverse()
+            if column != merged:  # 判断是否发生了移动
+                moved = True
+            for row in range(GRID_SIZE):
+                board[row][col] = merged[row]
+
+    elif direction == "left":
+        for row in range(GRID_SIZE):
+            merged = merge_tiles(board[row])
+            if board[row] != merged:  # 判断是否发生了移动
+                moved = True
+            board[row] = merged
+
+    elif direction == "right":
+        for row in range(GRID_SIZE):
+            row_tiles = board[row]
+            row_tiles.reverse()
+            merged = merge_tiles(row_tiles)
+            merged.reverse()
+            if row_tiles != merged:  # 判断是否发生了移动
+                moved = True
+            board[row] = merged
+
+    if moved:
+        generate_new_tile(board)
+        draw_board()
+
+    return moved
 
 
 # 游戏循环
