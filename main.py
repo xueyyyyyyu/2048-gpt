@@ -80,20 +80,20 @@ def generate_new_tile(board, direction):
     size = len(board)
     empty_cells = [(i, j) for i in range(size) for j in range(size) if board[i][j] == 0]
 
-    # Choose the position to generate the new tile based on the direction
+    # Choose the position to generate the new tile based on the direction and available empty cells
     if empty_cells:
         if direction == "up":
             row = max(empty_cells, key=lambda cell: cell[0])[0]
-            col = random.choice(range(size))
+            col = random.choice([cell[1] for cell in empty_cells if cell[0] == row])
         elif direction == "down":
             row = min(empty_cells, key=lambda cell: cell[0])[0]
-            col = random.choice(range(size))
+            col = random.choice([cell[1] for cell in empty_cells if cell[0] == row])
         elif direction == "left":
-            row = random.choice(range(size))
             col = max(empty_cells, key=lambda cell: cell[1])[1]
+            row = random.choice([cell[0] for cell in empty_cells if cell[1] == col])
         elif direction == "right":
-            row = random.choice(range(size))
             col = min(empty_cells, key=lambda cell: cell[1])[1]
+            row = random.choice([cell[0] for cell in empty_cells if cell[1] == col])
 
         board[row][col] = 2 if random.random() < 0.9 else 4
         return True  # 更新 moved 的状态
