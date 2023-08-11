@@ -139,6 +139,15 @@ def is_game_over():
     return True  # 游戏无法继续进行
 
 
+def draw_game_over():
+    game_over_text = font.render("Game Over!", True, (255, 255, 255))
+    text_rect = game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+
+    screen.fill((0, 0, 0))
+    screen.blit(game_over_text, text_rect)
+    pygame.display.flip()
+
+
 def move(direction):
     global board
 
@@ -209,20 +218,39 @@ def move(direction):
 
 # 游戏循环
 running = True
+game_over = False
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP:
-                move("up")
-            elif event.key == pygame.K_DOWN:
-                move("down")
-            elif event.key == pygame.K_LEFT:
-                move("left")
-            elif event.key == pygame.K_RIGHT:
-                move("right")
+            if not game_over:  # 仅在游戏未结束时才处理按键事件
+                if event.key == pygame.K_UP:
+                    move("up")
+                elif event.key == pygame.K_DOWN:
+                    move("down")
+                elif event.key == pygame.K_LEFT:
+                    move("left")
+                elif event.key == pygame.K_RIGHT:
+                    move("right")
 
     draw_board()
+
+    if is_game_over() and not game_over:
+        game_over = True
+        draw_game_over()  # 仅在游戏刚结束时绘制游戏结束画面
+
+    pygame.display.flip()
+
+    if game_over:
+        while game_over:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                    game_over = False  # 退出结束画面的循环
+
+            draw_game_over()
+            pygame.display.flip()
 
 pygame.quit()
