@@ -1,3 +1,5 @@
+import sys
+
 import pygame
 import random
 
@@ -9,7 +11,7 @@ def initialize_board(size):
 
 
 # 在随机空位置生成一个新数字（2或4）
-def generate_new_tile(board):
+def init_new_tile(board):
     size = len(board)
     empty_cells = [(i, j) for i in range(size) for j in range(size) if board[i][j] == 0]
     if empty_cells:
@@ -46,19 +48,23 @@ font = pygame.font.Font(None, 48)
 
 # 初始化游戏板和生成初始数字
 board = initialize_board(GRID_SIZE)
-generate_new_tile(board)
-generate_new_tile(board)
+init_new_tile(board)
+init_new_tile(board)
 
 
-def draw_tile(tile_value, row, col):
+def draw_tile(tile_value, row, col, step=0):
     tile_color = TILE_COLORS.get(tile_value, (255, 255, 255))
     pygame.draw.rect(screen, tile_color, (
-    col * (TILE_SIZE + PADDING) + PADDING, row * (TILE_SIZE + PADDING) + PADDING, TILE_SIZE, TILE_SIZE))
+        col * (TILE_SIZE + PADDING) + PADDING,
+        row * (TILE_SIZE + PADDING) + PADDING + step,  # 添加 step 参数
+        TILE_SIZE, TILE_SIZE))
 
     if tile_value:
         text_surface = font.render(str(tile_value), True, (0, 0, 0))
         text_rect = text_surface.get_rect(center=(
-        col * (TILE_SIZE + PADDING) + TILE_SIZE / 2 + PADDING, row * (TILE_SIZE + PADDING) + TILE_SIZE / 2 + PADDING))
+            col * (TILE_SIZE + PADDING) + TILE_SIZE / 2 + PADDING,
+            row * (TILE_SIZE + PADDING) + TILE_SIZE / 2 + PADDING + step  # 添加 step 参数
+        ))
         screen.blit(text_surface, text_rect)
 
 
@@ -68,6 +74,30 @@ def draw_board():
         for col in range(GRID_SIZE):
             draw_tile(board[row][col], row, col)
     pygame.display.flip()
+
+
+def generate_new_tile(board, direction):
+    size = len(board)
+    empty_cells = [(i, j) for i in range(size) for j in range(size) if board[i][j] == 0]
+
+    # Choose the position to generate the new tile based on the direction
+    if empty_cells:
+        if direction == "up":
+            row = max(empty_cells, key=lambda cell: cell[0])[0]
+            col = random.choice(range(size))
+        elif direction == "down":
+            row = min(empty_cells, key=lambda cell: cell[0])[0]
+            col = random.choice(range(size))
+        elif direction == "left":
+            row = random.choice(range(size))
+            col = max(empty_cells, key=lambda cell: cell[1])[1]
+        elif direction == "right":
+            row = random.choice(range(size))
+            col = min(empty_cells, key=lambda cell: cell[1])[1]
+
+        board[row][col] = 2 if random.random() < 0.9 else 4
+        return True  # 更新 moved 的状态
+    return False  # 没有生成新方块，不需要更新 moved 的状态
 
 
 def merge_tiles(tiles):
@@ -88,51 +118,91 @@ def merge_tiles(tiles):
     return merged
 
 
+def is_game_over():
+    # 检查是否有相邻的相同数字可以合并
+    for row in range(GRID_SIZE):
+        for col in range(GRID_SIZE - 1):
+            if board[row][col] == board[row][col + 1]:
+                return False
+
+    for col in range(GRID_SIZE):
+        for row in range(GRID_SIZE - 1):
+            if board[row][col] == board[row + 1][col]:
+                return False
+
+    # 检查是否还有空格可以生成新数字
+    for row in range(GRID_SIZE):
+        for col in range(GRID_SIZE):
+            if board[row][col] == 0:
+                return False
+
+    return True  # 游戏无法继续进行
+
+
 def move(direction):
     global board
 
     moved = False
+    step = 0
+    step_delta = TILE_SIZE + PADDING
 
     if direction == "up":
-        for col in range(GRID_SIZE):
-            column = [board[row][col] for row in range(GRID_SIZE)]
-            merged = merge_tiles(column)
-            if column != merged:  # 判断是否发生了移动
-                moved = True
-            for row in range(GRID_SIZE):
-                board[row][col] = merged[row]
+        step_delta = -step_delta
+        merge_func = merge_tiles
 
     elif direction == "down":
-        for col in range(GRID_SIZE):
-            column = [board[row][col] for row in range(GRID_SIZE)]
-            column.reverse()
-            merged = merge_tiles(column)
-            merged.reverse()
-            if column != merged:  # 判断是否发生了移动
-                moved = True
-            for row in range(GRID_SIZE):
-                board[row][col] = merged[row]
+        merge_func = merge_tiles
+        step_delta = -step_delta
 
     elif direction == "left":
-        for row in range(GRID_SIZE):
-            merged = merge_tiles(board[row])
-            if board[row] != merged:  # 判断是否发生了移动
-                moved = True
-            board[row] = merged
+        merge_func = merge_tiles
 
     elif direction == "right":
+        step_delta = -step_delta
+        merge_func = lambda tiles: merge_tiles(tiles[::-1])[::-1]
+
+    while step < TILE_SIZE + PADDING:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+        screen.fill(BACKGROUND_COLOR)
         for row in range(GRID_SIZE):
-            row_tiles = board[row]
-            row_tiles.reverse()
-            merged = merge_tiles(row_tiles)
-            merged.reverse()
-            if row_tiles != merged:  # 判断是否发生了移动
-                moved = True
-            board[row] = merged
+            for col in range(GRID_SIZE):
+                draw_tile(board[row][col], row, col, step)
+        pygame.display.flip()
+        pygame.time.delay(50)
+
+        step += abs(step_delta)
+
+    for i in range(GRID_SIZE):
+        if direction == "up" or direction == "down":
+            if direction == "up":
+                tiles = [board[row][i] for row in range(GRID_SIZE)]
+            else:
+                tiles = [board[row][i] for row in range(GRID_SIZE)][::-1]
+        else:
+            tiles = board[i][:]
+        merged = merge_func(tiles)
+        if tiles != merged:
+            moved = True
+        if direction == "up":
+            for row in range(GRID_SIZE):
+                board[row][i] = merged[row]
+        elif direction == "down":
+            for row in range(GRID_SIZE):
+                board[GRID_SIZE - row - 1][i] = merged[row]
+        else:
+            board[i] = merged[:]
 
     if moved:
-        generate_new_tile(board)
+        generate_new_tile(board, direction)
         draw_board()
+
+        if is_game_over():
+            print("Game Over! Cannot make any more moves.")
+            # 在这里可以添加其他游戏结束的逻辑，例如显示游戏结束的界面等
 
     return moved
 
