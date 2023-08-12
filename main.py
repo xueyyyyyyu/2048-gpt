@@ -38,6 +38,10 @@ TILE_COLORS = {
     8: (242, 177, 121),
     # Add more colors for higher values
 }
+SCORE_FONT_SIZE = 24
+SCORE_COLOR = (0, 0, 255)
+score = 0
+
 
 # 创建游戏界面
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -76,6 +80,12 @@ def draw_board():
     for row in range(GRID_SIZE):
         for col in range(GRID_SIZE):
             draw_tile(board[row][col], row, col)
+
+    # 绘制分数
+    score_text = font.render("Score: " + str(score), True, SCORE_COLOR)
+    score_rect = score_text.get_rect(topleft=(WIDTH - PADDING - score_text.get_width(), PADDING))
+    screen.blit(score_text, score_rect)
+
     pygame.display.flip()
 
 
@@ -106,6 +116,7 @@ def generate_new_tile(board, direction):
 def merge_tiles(tiles):
     merged = [0] * GRID_SIZE
     merged_idx = 0
+    global score  # 声明全局分数变量
 
     for tile in tiles:
         if tile != 0:
@@ -113,6 +124,7 @@ def merge_tiles(tiles):
                 merged[merged_idx] = tile
             elif merged[merged_idx] == tile:
                 merged[merged_idx] *= 2
+                score += merged[merged_idx]  # 更新分数
                 merged_idx += 1
             else:
                 merged_idx += 1
@@ -148,6 +160,12 @@ def draw_game_over():
 
     screen.fill((0, 0, 0))
     screen.blit(game_over_text, text_rect)
+
+    # 显示分数
+    score_text = font.render("Score: " + str(score), True, (255, 255, 255))
+    score_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 50))
+    screen.blit(score_text, score_rect)
+
     pygame.display.flip()
 
 
