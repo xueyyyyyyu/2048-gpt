@@ -1,7 +1,56 @@
 import sys
-
 import pygame
 import random
+
+# 初始化Pygame
+pygame.init()
+
+# 加载字体
+font = pygame.font.Font(None, 48)
+
+# 游戏参数
+GRID_SIZE = 4
+TILE_SIZE = 100
+PADDING = 20
+WIDTH = GRID_SIZE * (TILE_SIZE + PADDING) + PADDING
+HEIGHT = WIDTH
+BACKGROUND_COLOR = (187, 173, 160)
+TILE_COLORS = {
+    0: (205, 193, 180),
+    2: (238, 228, 218),
+    4: (237, 224, 200),
+    8: (242, 177, 121),
+    16: (245, 149, 99),
+    32: (246, 124, 95),
+    64: (246, 94, 59),
+    128: (237, 207, 114),
+    256: (237, 204, 97),
+    512: (237, 200, 80),
+    1024: (237, 197, 63),
+    2048: (128, 0, 128),
+    # Add more colors for higher values
+}
+
+SCORE_FONT_SIZE = 24
+SCORE_COLOR = (0, 0, 255)
+score = 0
+
+
+# 创建游戏界面
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption('2048 Game')
+
+
+def draw_start_screen():
+    start_text = font.render("2048 Game", True, (255, 255, 255))
+    text_rect = start_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+
+    screen.fill((0, 0, 0))
+    screen.blit(start_text, text_rect)
+    pygame.display.flip()
+
+
+draw_start_screen()
 
 
 # 初始化游戏板
@@ -20,35 +69,6 @@ def init_new_tile(board):
         return True  # 更新 moved 的状态
     return False  # 没有生成新方块，不需要更新 moved 的状态
 
-
-# 初始化Pygame
-pygame.init()
-
-# 游戏参数
-GRID_SIZE = 4
-TILE_SIZE = 100
-PADDING = 20
-WIDTH = GRID_SIZE * (TILE_SIZE + PADDING) + PADDING
-HEIGHT = WIDTH
-BACKGROUND_COLOR = (187, 173, 160)
-TILE_COLORS = {
-    0: (205, 193, 180),
-    2: (238, 228, 218),
-    4: (237, 224, 200),
-    8: (242, 177, 121),
-    # Add more colors for higher values
-}
-SCORE_FONT_SIZE = 24
-SCORE_COLOR = (0, 0, 255)
-score = 0
-
-
-# 创建游戏界面
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption('2048 Game')
-
-# 加载字体
-font = pygame.font.Font(None, 48)
 
 # 初始化游戏板和生成初始数字
 board = initialize_board(GRID_SIZE)
@@ -257,12 +277,13 @@ def has_won_condition():
 # 游戏循环
 running = True
 
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN:
-            if not game_over:  # 仅在游戏未结束时才处理按键事件
+            if not game_over and not win:  # 仅在游戏未结束且未胜利时处理按键事件
                 if event.key == pygame.K_UP:
                     move("up")
                 elif event.key == pygame.K_DOWN:
@@ -276,10 +297,8 @@ while running:
 
     if is_game_over() and not game_over:
         game_over = True
-        draw_game_over()  # 仅在游戏刚结束时绘制游戏结束画面
     elif not win and has_won_condition():
         win = True
-        draw_win_screen()
 
     pygame.display.flip()
 
@@ -299,3 +318,4 @@ while running:
             pygame.display.flip()
 
 pygame.quit()
+sys.exit()
