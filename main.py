@@ -51,6 +51,9 @@ board = initialize_board(GRID_SIZE)
 init_new_tile(board)
 init_new_tile(board)
 
+game_over = False
+win = False
+
 
 def draw_tile(tile_value, row, col, step=0):
     tile_color = TILE_COLORS.get(tile_value, (255, 255, 255))
@@ -148,6 +151,15 @@ def draw_game_over():
     pygame.display.flip()
 
 
+def draw_win_screen():
+    win_text = font.render("Congratulations! You Win!", True, (255, 255, 255))
+    text_rect = win_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+
+    screen.fill((0, 0, 0))
+    screen.blit(win_text, text_rect)
+    pygame.display.flip()
+
+
 def move(direction):
     global board
 
@@ -216,9 +228,16 @@ def move(direction):
     return moved
 
 
+def has_won_condition():
+    for row in board:
+        for tile_value in row:
+            if tile_value == 2048:
+                return True
+    return False
+
+
 # 游戏循环
 running = True
-game_over = False
 
 while running:
     for event in pygame.event.get():
@@ -240,17 +259,25 @@ while running:
     if is_game_over() and not game_over:
         game_over = True
         draw_game_over()  # 仅在游戏刚结束时绘制游戏结束画面
+    elif not win and has_won_condition():
+        win = True
+        draw_win_screen()
 
     pygame.display.flip()
 
-    if game_over:
-        while game_over:
+    if game_over or win:
+        while game_over or win:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-                    game_over = False  # 退出结束画面的循环
+                    game_over = False
+                    win = False  # 退出结束画面的循环
 
-            draw_game_over()
+            if game_over:
+                draw_game_over()
+            elif win:
+                draw_win_screen()
+
             pygame.display.flip()
 
 pygame.quit()
