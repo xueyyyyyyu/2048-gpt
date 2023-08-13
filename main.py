@@ -35,22 +35,9 @@ SCORE_FONT_SIZE = 24
 SCORE_COLOR = (0, 0, 255)
 score = 0
 
-
 # 创建游戏界面
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('2048 Game')
-
-
-def draw_start_screen():
-    start_text = font.render("2048 Game", True, (255, 255, 255))
-    text_rect = start_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
-
-    screen.fill((0, 0, 0))
-    screen.blit(start_text, text_rect)
-    pygame.display.flip()
-
-
-draw_start_screen()
 
 
 # 初始化游戏板
@@ -74,9 +61,6 @@ def init_new_tile(board):
 board = initialize_board(GRID_SIZE)
 init_new_tile(board)
 init_new_tile(board)
-
-game_over = False
-win = False
 
 
 def draw_tile(tile_value, row, col, step=0):
@@ -274,16 +258,32 @@ def has_won_condition():
     return False
 
 
+def draw_start_screen():
+    start_text = font.render("2048 Game", True, (255, 255, 255))
+    text_rect = start_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+
+    screen.fill((0, 0, 0))
+    screen.blit(start_text, text_rect)
+    pygame.display.flip()
+
+
 # 游戏循环
 running = True
-
+game_state = "start"  # 添加状态变量
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.KEYDOWN:
-            if not game_over and not win:  # 仅在游戏未结束且未胜利时处理按键事件
+
+        if game_state == "start":
+            draw_start_screen()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    game_state = "playing"
+
+        elif game_state == "playing":
+            if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
                     move("up")
                 elif event.key == pygame.K_DOWN:
@@ -293,29 +293,27 @@ while running:
                 elif event.key == pygame.K_RIGHT:
                     move("right")
 
-    draw_board()
+            draw_board()
 
-    if is_game_over() and not game_over:
-        game_over = True
-    elif not win and has_won_condition():
-        win = True
-
-    pygame.display.flip()
-
-    if game_over or win:
-        while game_over or win:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                    game_over = False
-                    win = False  # 退出结束画面的循环
-
-            if game_over:
+            if is_game_over():
+                game_state = "finished"
                 draw_game_over()
-            elif win:
+            elif has_won_condition():
+                game_state = "finished"
                 draw_win_screen()
 
-            pygame.display.flip()
+        elif game_state == "finished":
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:  # Press 'R' to restart
+                    initialize_board(GRID_SIZE)
+                    init_new_tile(board)
+                    init_new_tile(board)
+                    score = 0
+                    game_state = "playing"
 
+                elif event.key == pygame.K_q:  # Press 'Q' to quit
+                    running = False
+
+        pygame.display.flip()
 pygame.quit()
 sys.exit()
