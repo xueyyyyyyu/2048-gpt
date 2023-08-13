@@ -46,6 +46,12 @@ def initialize_board(size):
     return board
 
 
+def clear_board(board):
+    for row in range(GRID_SIZE):
+        for col in range(GRID_SIZE):
+            board[row][col] = 0
+
+
 # 在随机空位置生成一个新数字（2或4）
 def init_new_tile(board):
     size = len(board)
@@ -280,6 +286,7 @@ while running:
             draw_start_screen()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
+                    print("start")
                     game_state = "playing"
 
         elif game_state == "playing":
@@ -304,14 +311,16 @@ while running:
 
         elif game_state == "finished":
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:  # Press 'R' to restart
-                    initialize_board(GRID_SIZE)
+                if event.key == pygame.K_RETURN:  # Press 'enter' to restart
+                    print("restart")
+                    clear_board(board)
                     init_new_tile(board)
                     init_new_tile(board)
                     score = 0
                     game_state = "playing"
-
-                elif event.key == pygame.K_q:  # Press 'Q' to quit
+                    draw_board()
+                elif event.key == pygame.K_SPACE:  # Press 'Space' to quit
+                    print("quit")
                     running = False
 
         pygame.display.flip()
